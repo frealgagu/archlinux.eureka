@@ -4,45 +4,47 @@
 # Contributor: Valsu [arch(at)hylia.de]
 
 pkgname=eureka
-pkgver=1.27b
+pkgver=2.0.2
 pkgrel=1
 pkgdesc="A map editor for the classic DOOM games"
 arch=("i686" "x86_64")
 url="http://${pkgname}-editor.sourceforge.net/"
 license=("GPL2")
-depends=("fltk" "glu")
+depends=("fltk" "glu" "gmock" "gtest" "libxpm")
+makedepends=("cmake" "git" "python")
+options=(!buildflags !staticlibs)
 source=(
-  "https://download.sourceforge.net/${pkgname}-editor/${pkgname}-${pkgver}-source.tar.gz"
-  "${pkgname}.patch"
-)
-md5sums=(
-  "ded6495c09e23bfe55513eb47abf17ea"
-  "fd239308e1594262d26692b54ab083a3"
-)
-sha1sums=(
-  "0ba0f2c30c1758722198c0dac99ca25e1143dd20"
-  "2c6194833e886b3a2d968271d7a650b8b12b4231"
+  "https://github.com/ioan-chera/${pkgname}-editor/archive/refs/tags/${pkgname}-${pkgver}.tar.gz"
 )
 sha256sums=(
-  "10d6ac1bd6cabb5ae8d19127de8bf725218d98fbe67bd016671b12c9c286f22b"
-  "b4dfc71a004be7a08877005d71893488a92dbc17e4b1e13b80b75998d2950e69"
+  "29ac38fdcb46a4ac2f2a56899abd7fd0994759cf0b74538043fcfbab9b19f88e"
 )
 
 prepare() {
-  cd "${srcdir}/${pkgname}-${pkgver}-source"
-  patch -p1 -i "../${pkgname}.patch"
+  mkdir "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}/build"
 }
 
 
 build() {
-  cd "${srcdir}/${pkgname}-${pkgver}-source"
-  make PREFIX=/usr OPTIMISE="$CXXFLAGS $CPPFLAGS"
+  cd "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}/build"
+
+  cmake "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}" \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib
+  make
 }
 
 package() {
-  cd "${srcdir}/${pkgname}-${pkgver}-source"
-  make PREFIX="${pkgdir}/usr" install
-  install -Dm644 "${srcdir}/${pkgname}-${pkgver}-source/misc/${pkgname}.xpm" "${pkgdir}/usr/share/pixmaps/${pkgname}.xpm"
-  install -Dm644 "${srcdir}/${pkgname}-${pkgver}-source/misc/${pkgname}.desktop" "${pkgdir}/usr/share/applications/${pkgname}.desktop"
-  install -Dm644 "${srcdir}/${pkgname}-${pkgver}-source/misc/${pkgname}.6" "${pkgdir}/usr/share/man/man6/${pkgname}.6"
+  cd "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}/build"
+  make DESTDIR="${pkgdir}" install
+
+  rm -rf "${pkgdir}/usr/include/gmock"
+  rm -rf "${pkgdir}/usr/include/gtest"
+  rm -rf "${pkgdir}/usr/lib/cmake/GTest"
+  rm -f "${pkgdir}/usr/lib/pkgconfig/gmock"*
+  rm -f "${pkgdir}/usr/lib/pkgconfig/gtest"*
+
+  install -Dm644 "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}/misc/${pkgname}.xpm" "${pkgdir}/usr/share/pixmaps/${pkgname}.xpm"
+  install -Dm644 "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}/misc/${pkgname}.desktop" "${pkgdir}/usr/share/applications/${pkgname}.desktop"
+  install -Dm644 "${srcdir}/${pkgname}-editor-${pkgname}-${pkgver}/misc/${pkgname}.6" "${pkgdir}/usr/share/man/man6/${pkgname}.6"
 }
